@@ -1,0 +1,8 @@
+name: forest-fire-prediction
+metadata:
+  template: forest-fire-prediction@0.1.0
+services:
+  api:
+    project: .
+    language: python
+    host: appservice

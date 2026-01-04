@@ -11,6 +11,14 @@ app=application
 ridge_model=pickle.load(open('Models/ridge.pkl','rb'))
 standard_scaler=pickle.load(open('Models/scaler.pkl','rb'))
 
+# Enable CORS for GitHub Pages frontend
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    return response
+
 @app.route("/")
 def index():
     return render_template('index.html')
@@ -39,3 +47,26 @@ def predict_datapoint():
 
 if __name__=="__main__":
     app.run(host="0.0.0.0")
+
+    @app.route('/api/predict', methods=['POST', 'OPTIONS'])
+    def api_predict():
+        if request.method == 'OPTIONS':
+            return '', 204
+        try:
+            data = request.get_json()
+            Temperature = float(data.get('Temperature'))
+            RH = float(data.get('RH'))
+            Ws = float(data.get('Ws'))
+            Rain = float(data.get('Rain'))
+            FFMC = float(data.get('FFMC'))
+            DMC = float(data.get('DMC'))
+            ISI = float(data.get('ISI'))
+            Classes = float(data.get('Classes'))
+            Region = float(data.get('Region'))
+        
+            new_data_scaled = standard_scaler.transform([[Temperature, RH, Ws, Rain, FFMC, DMC, ISI, Classes, Region]])
+            result = ridge_model.predict(new_data_scaled)
+        
+            return jsonify({'prediction': float(result[0]), 'success': True})
+        except Exception as e:
+            return jsonify({'error': str(e), 'success': False}), 400
